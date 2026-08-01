@@ -33,19 +33,35 @@ A modern, secure, fully‑containerized authentication and user‑management bac
 ---
 
 ## 🧱 Architecture Overview
-
+<pre>
     /api
+        docker-compose.yaml
+        Dockerfile
+        .env
+        .npmrc
+        package.json
+        pnpm-policy.json
+        pnpm-workspace.yaml
         /src
+            authMiddleware.js
             authRoutes.js
             changePasswordRoute.js
-            email.js
-            authMiddleware.js
             db.js
-            schema.sql
+            deleteAccountRoute.js
+            email.js
+            index.js
+            initDb.js
+            loginRoute.js
+            logoutRoute.js
+            protectedRoutes.js
+            refreshRoute.js
+            requestPasswordResetRoute.js
+            resetPasswordRoute.js
             test-auth.ps1
-            Dockerfile
-            docker-compose.yaml
-
+            verifyEmailRoute.js
+        /db
+            schema.sql
+</pre>
 
 ### API
 Express-based service exposing `/auth/*` routes.

@@ -75,13 +75,14 @@ From the project root:
     docker compose up --build
 
 Services:
+<pre>
     | Service        | Port | Description        |
     |----------------|------|--------------------|
     | API            | 4000 | Auth backend       |
     | PostgreSQL     | 5432 | Database           |
     | MailHog UI     | 8025 | Email viewer       |
     | MailHog SMTP   | 1025 | SMTP server        |
-
+</pre>
 ---
 
 ## 🔐 Auth Endpoints

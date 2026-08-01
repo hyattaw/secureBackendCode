@@ -34,17 +34,17 @@ A modern, secure, fully‑containerized authentication and user‑management bac
 
 ## 🧱 Architecture Overview
 
-/api
-/src
-authRoutes.js
-changePasswordRoute.js
-email.js
-authMiddleware.js
-db.js
-schema.sql
-test-auth.ps1
-Dockerfile
-docker-compose.yaml
+    /api
+        /src
+            authRoutes.js
+            changePasswordRoute.js
+            email.js
+            authMiddleware.js
+            db.js
+            schema.sql
+            test-auth.ps1
+            Dockerfile
+            docker-compose.yaml
 
 
 ### API
@@ -64,23 +64,23 @@ MailHog handles all outbound email during development:
 - Verification emails  
 - Password change notifications  
 
-MailHog UI:  http://localhost:8025
+MailHog UI:
+    http://localhost:8025
 
 ---
 
 ## 🐳 Running the Project (Docker)
 
 From the project root:
-docker compose up --build
+    docker compose up --build
 
 Services:
-
-| Service        | Port | Description        |
-|----------------|------|--------------------|
-| API            | 4000 | Auth backend       |
-| PostgreSQL     | 5432 | Database           |
-| MailHog UI     | 8025 | Email viewer       |
-| MailHog SMTP   | 1025 | SMTP server        |
+    | Service        | Port | Description        |
+    |----------------|------|--------------------|
+    | API            | 4000 | Auth backend       |
+    | PostgreSQL     | 5432 | Database           |
+    | MailHog UI     | 8025 | Email viewer       |
+    | MailHog SMTP   | 1025 | SMTP server        |
 
 ---
 
@@ -115,8 +115,7 @@ Deletes user account and invalidates tokens.
 ## 🧪 Automated Test Script
 
 The project includes a full end‑to‑end test harness:
-
-/api/src/test-auth.ps1
+    /api/src/test-auth.ps1
 
 
 It validates:
@@ -133,8 +132,7 @@ It validates:
 10. Confirm deletion  
 
 Run it with:
-
-pwsh ./api/src/test-auth.ps1
+    pwsh ./api/src/test-auth.ps1
 
 
 ---
@@ -144,47 +142,43 @@ pwsh ./api/src/test-auth.ps1
 All emails are routed to MailHog during development.
 
 SMTP configuration:
-
-SMTP_HOST=mailhog
-SMTP_PORT=1025
-SMTP_SECURE=false
-SMTP_USER=
-SMTP_PASS=
-
+    SMTP_HOST=mailhog
+    SMTP_PORT=1025
+    SMTP_SECURE=false
+    SMTP_USER=
+    SMTP_PASS=
 
 View emails at:
-http://localhost:8025
-
+    http://localhost:8025
 
 ---
 
 ## 🔧 Environment Variables
 
-Create `api/.env`:
+    Create `api/.env`:
 
-JWT_SECRET=your-secret
-DATABASE_URL=postgresql://drewhyatt:localdev@db:5432/drewhyatt
+    JWT_SECRET=your-secret
+    DATABASE_URL=postgresql://drewhyatt:localdev@db:5432/drewhyatt
 
-SMTP_HOST=mailhog
-SMTP_PORT=1025
-SMTP_SECURE=false
-SMTP_USER=
-SMTP_PASS=
-
+    SMTP_HOST=mailhog
+    SMTP_PORT=1025
+    SMTP_SECURE=false
+    SMTP_USER=
+    SMTP_PASS=
 
 ---
 
 ## 🛠️ Development Commands
 
 ### Install dependencies
-npm install
+    npm install
 
 
 ### Run API locally (non‑Docker)
-npm run dev
+    npm run dev
 
 ### Run tests
-pwsh ./src/test-auth.ps1
+    pwsh ./src/test-auth.ps1
 
 ---
 
@@ -200,5 +194,4 @@ pwsh ./src/test-auth.ps1
 ---
 
 ## 📄 License
-
 MIT License — free to use, modify, and distribute.

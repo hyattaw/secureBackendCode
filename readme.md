@@ -131,9 +131,7 @@ Deletes user account and invalidates tokens.
 
 ## 🧪 Automated Test Script
 
-The project includes a full end‑to‑end test harness:
-    /api/src/test-auth.ps1
-
+The project includes a full end‑to‑end test harness: `/api/src/test-auth.ps1`
 
 It validates:
 
@@ -149,8 +147,7 @@ It validates:
 10. Confirm deletion  
 
 Run it with:
-    pwsh ./api/src/test-auth.ps1
-
+    `pwsh ./api/src/test-auth.ps1`
 
 ---
 

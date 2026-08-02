@@ -1,7 +1,8 @@
 // src/authMiddleware.js
 import jwt from "jsonwebtoken";
+import pool from "./db.js";
 
-export function requireAuth(req, res, next) {
+export async function requireAuth(req, res, next) {
   try {
     const token = req.cookies.auth;
 
@@ -14,8 +15,19 @@ export function requireAuth(req, res, next) {
       process.env.JWT_SECRET || "dev-secret"
     );
 
-    // Attach user info to request for downstream handlers
-    req.user = decoded;
+    // Load user from DB (critical!)
+    const userResult = await pool.query(
+      "SELECT id, email FROM users WHERE id = $1",
+      [decoded.id]
+    );
+
+    if (userResult.rows.length === 0) {
+      // User no longer exists (deleted)
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    // Attach full user record
+    req.user = userResult.rows[0];
 
     next();
   } catch (err) {

@@ -19,7 +19,14 @@ CREATE TABLE IF NOT EXISTS refresh_tokens (
 CREATE TABLE IF NOT EXISTS password_resets (
   id SERIAL PRIMARY KEY,
   user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  email TEXT,
   token TEXT NOT NULL,
-  expires_at TIMESTAMPTZ NOT NULL,
+  expires_at TIMESTAMP NOT NULL DEFAULT (NOW() + INTERVAL '15 minutes'),
   used BOOLEAN NOT NULL DEFAULT FALSE
+);
+
+CREATE TABLE reset_rate_limits (
+  id SERIAL PRIMARY KEY,
+  email TEXT NOT NULL,
+  request_time TIMESTAMP NOT NULL DEFAULT NOW()
 );

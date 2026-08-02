@@ -1,0 +1,14 @@
+/* ================================
+   Route Transitions
+   ================================ */
+
+[route] {
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity var(--transition-fast), transform var(--transition-fast);
+}
+
+[route].active {
+  opacity: 1;
+  transform: translateY(0);
+}

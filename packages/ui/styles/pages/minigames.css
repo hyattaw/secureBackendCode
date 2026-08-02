@@ -1,0 +1,16 @@
+/* ================================
+   Minigames Page
+   ================================ */
+
+#minigames {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 1rem;
+  text-align: center;
+}
+
+#minigames .nav-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}

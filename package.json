@@ -1,0 +1,39 @@
+{
+  "name": "drewhyatt",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev:www": "node scripts/dev-www.js",
+    "dev:api": "node scripts/dev-api.js",
+    "dev:games:web": "node scripts/dev-games-web.js",
+    "dev:games:desktop": "node scripts/dev-games-desktop.js",
+    "dev:games:mobile": "node scripts/dev-games-mobile.js",
+    "build:www": "node scripts/build-www.js",
+    "build:api": "node scripts/build-api.js",
+    "build:games:web": "node scripts/build-games-web.js",
+    "build:games:desktop": "node scripts/build-games-desktop.js",
+    "build:games:mobile": "node scripts/build-games-mobile.js"
+  },
+  "keywords": [],
+  "author": "Andrew Hyatt, hyattdh@outlook.com; https://www.linkedin.com/in/drew-hyatt/",
+  "license": "ISC",
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "^11.18.0",
+      "onFail": "download"
+    }
+  },
+  "type": "module",
+  "devDependencies": {
+    "eslint": "^10.8.0",
+    "prettier": "^3.9.6",
+    "typescript": "^7.0.2"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "private": true
+}

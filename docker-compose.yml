@@ -1,3 +1,5 @@
+version: "3.9"
+
 services:
   db:
     image: postgres:16
@@ -9,19 +11,42 @@ services:
     ports:
       - "5432:5432"
     volumes:
+      - db_data:/var/lib/postgresql/data
       - ./db:/docker-entrypoint-initdb.d
 
   api:
-    build: ./api
-    ports:
-      - "4000:4000"
+    build: ./apps/api
+    expose:
+      - "4000"
     env_file:
-      - ./api/.env
+      - ./apps/api/.env
     environment:
       DATABASE_URL: postgresql://drewhyatt:localdev@db:5432/drewhyatt
     depends_on:
       - db
       - mailhog
+
+  www:
+    build: ./apps/www
+    volumes:
+      - www_dist:/srv/www
+
+  games:
+    build: ./apps/games/web
+    volumes:
+      - games_dist:/srv/games
+
+  caddy:
+    build: ./infra/caddy
+    ports:
+      - "80:80"
+    depends_on:
+      - api
+      - www
+      - games
+    volumes:
+      - www_dist:/srv/www
+      - games_dist:/srv/games
 
   mailhog:
     image: mailhog/mailhog
@@ -32,3 +57,5 @@ services:
 
 volumes:
   db_data:
+  www_dist:
+  games_dist:

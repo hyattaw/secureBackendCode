@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+  <defs>
+    <!-- Circle -->
+    <circle id="sun-center" cx="12" cy="12" r="4" />
+
+    <!-- Horizontal rays -->
+    <path id="sun-ray" d="M1 12 L4.5 12 M19.5 12 L23 12" />
+  </defs>
+
+  <g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+    <!-- Center -->
+    <use href="#sun-center" />
+
+    <!-- Horizontal -->
+    <use href="#sun-ray" />
+
+    <!-- 45° -->
+    <use href="#sun-ray" transform="rotate(45 12 12)" />
+
+    <!-- -45° -->
+    <use href="#sun-ray" transform="rotate(-45 12 12)" />
+
+    <!-- 90° -->
+    <use href="#sun-ray" transform="rotate(90 12 12)" />
+  </g>
+</svg>

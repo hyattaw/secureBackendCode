@@ -1,0 +1,25 @@
+appId: com.crossplatform.app
+productName: CrossPlatformApp
+
+directories:
+  output: dist
+  buildResources: build
+
+files:
+  - "../app/dist/**/*"
+  - "main.js"
+  - "preload.js"
+
+extraResources: []
+
+win:
+  target:
+    - nsis
+  sign: false
+  forceCodeSigning: false
+mac:
+  target: []
+  identity: null
+
+linux:
+  target: []

@@ -1,0 +1,30 @@
+.sound-toggle-icon {
+  padding: 6px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sound-toggle-icon span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sound-toggle-icon span svg {
+  width: 30px;
+  height: 30px;
+  display: block;
+  color: currentColor;
+}
+
+/* Sound ON */
+.unmuted #mute-icon     { display: none;  }
+.unmuted #volumeOn-icon { display: block; }
+
+/* Sound OFF */
+.muted #mute-icon     { display: block; }
+.muted #volumeOn-icon { display: none;  }

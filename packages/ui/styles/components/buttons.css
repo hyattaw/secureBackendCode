@@ -1,0 +1,39 @@
+/* ================================
+   Buttons
+   ================================ */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 500;
+  padding: 0.6rem 1rem;
+  border-radius: var(--radius);
+  background: var(--color-accent);
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.btn:hover {
+  background: color-mix(in srgb, var(--color-accent) 80%, black);
+}
+
+/* Variants */
+.btn.outline {
+  background: transparent;
+  color: var(--color-accent);
+  border: 2px solid var(--color-accent);
+}
+
+.btn.small {
+  padding: 0.4rem 0.75rem;
+  font-size: 0.9rem;
+}
+
+.btn.block {
+  width: 100%;
+}

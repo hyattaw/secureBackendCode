@@ -1,0 +1,294 @@
+/* ============================================================
+   THEME VARIABLES (uses your app's existing data-theme system)
+   ============================================================ */
+
+:root {
+  --bp-bg: var(--color-surface);
+  --bp-bg-elevated: var(--color-surface-elevated);
+  --bp-text: var(--color-text);
+  --bp-accent: var(--color-accent);
+  --bp-on-accent: var(--color-on-accent);
+  --bp-shadow: var(--shadow);
+}
+
+/* ============================================================
+   CONTAINER + HEADER
+   ============================================================ */
+
+#spt-bp-container {
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 20px;
+  color: var(--bp-text);
+}
+
+.spt-bp-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.spt-bp-title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.spt-bp-header-right {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+/* ============================================================
+   SETTINGS ICON (gear)
+   ============================================================ */
+
+.spt-bp-settings-icon {
+  font-size: 22px;
+  cursor: pointer;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+  transition: transform 0.25s ease, opacity 0.25s ease;
+  color: var(--bp-text);
+}
+
+.spt-bp-settings-icon:hover {
+  transform: scale(1.15);
+}
+
+.spt-bp-settings-open {
+  animation: bp-gear-spin 0.8s ease forwards;
+}
+
+@keyframes bp-gear-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(180deg);
+  }
+}
+
+/* ============================================================
+   SCORE BOARD
+   ============================================================ */
+
+.spt-bp-score-board {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+/* ============================================================
+   BOARD GRID
+   ============================================================ */
+
+.spt-bp-board {
+  display: grid;
+  grid-template-columns: repeat(8, 40px);
+  grid-template-rows: repeat(8, 40px);
+  gap: 4px;
+  background: var(--bp-bg-elevated);
+  padding: 10px;
+  border-radius: 10px;
+  box-shadow: var(--bp-shadow);
+}
+
+.spt-bp-cell {
+  width: 40px;
+  height: 40px;
+  background: var(--bp-bg);
+  border-radius: 6px;
+  transition: background 0.15s ease;
+}
+
+.spt-bp-cell.filled {
+  background: var(--bp-accent);
+}
+
+/* Preview highlight */
+.preview-valid {
+  outline: 2px solid var(--bp-accent);
+}
+
+.preview-invalid {
+  outline: 2px solid red;
+}
+
+/* ============================================================
+   TRAY + SHAPES
+   ============================================================ */
+
+.spt-bp-tray {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+.spt-bp-tray-slot {
+  width: 120px;
+  height: 120px;
+  background: var(--bp-bg-elevated);
+  border-radius: 10px;
+  box-shadow: var(--bp-shadow);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+
+.spt-bp-shape {
+  display: grid;
+  grid-template-columns: repeat(var(--bp-cols), 20px);
+  gap: 2px;
+  transition: opacity 0.15s ease;
+}
+
+
+.spt-bp-shape.dragging-hidden {
+  opacity: 0;
+}
+
+.spt-bp-shape-block {
+  width: 20px;
+  height: 20px;
+  background: var(--bp-accent);
+  border-radius: 4px;
+
+  grid-row: var(--bp-row);
+  grid-column: var(--bp-col);
+}
+
+
+/* ============================================================
+   DRAG CLONE
+   ============================================================ */
+
+.spt-bp-drag-clone {
+  width: 40px;
+  height: 40px;
+  position: fixed;
+  pointer-events: none;
+  z-index: 9999;
+  display: grid;
+  gap: 2px;
+}
+
+/* ============================================================
+   OVERLAY + MODALS
+   ============================================================ */
+
+.spt-bp-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 5000;
+}
+
+.spt-bp-modal {
+  background: var(--bp-bg);
+  color: var(--bp-text);
+  padding: 10px;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 300px;
+  box-shadow: var(--bp-shadow);
+  text-align: left;
+  box-sizing: border-box;margin: 0 auto;
+}
+
+.help-modal {
+  max-width: 320px;
+  width: 90%;
+  padding: 1%;
+  box-sizing: border-box;
+}
+
+.settings-modal {
+  max-width: 320px;
+}
+
+.gameover-modal {
+  max-width: 260px;
+  text-align: center;
+}
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+
+.spt-bp-btn-primary,
+.spt-bp-btn-secondary {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  margin-top: 12px;
+  transition: opacity 0.2s ease;
+  border: none;
+}
+
+.spt-bp-btn-primary {
+  background: var(--bp-accent);
+  color: var(--bp-on-accent);
+}
+
+.spt-bp-btn-secondary {
+  background: var(--bp-bg-elevated);
+  color: var(--bp-accent);
+}
+
+.spt-bp-btn-primary:hover,
+.spt-bp-btn-secondary:hover {
+  opacity: 0.85;
+}
+
+/* ============================================================
+   SETTINGS GROUPS
+   ============================================================ */
+
+.spt-bp-setting-group {
+  margin-top: 15px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.spt-bp-setting-group label {
+  font-weight: bold;
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+
+@media (max-width: 480px) {
+  .spt-bp-board {
+    grid-template-columns: repeat(8, 34px);
+    grid-template-rows: repeat(8, 34px);
+  }
+
+  .spt-bp-cell {
+    width: 34px;
+    height: 34px;
+  }
+
+  .spt-bp-tray-slot {
+    width: 100px;
+    height: 100px;
+  }
+
+  .spt-bp-shape-block {
+    width: 18px;
+    height: 18px;
+  }
+}

@@ -1,0 +1,83 @@
+/* ================================
+   Theme Toggle Component
+   ================================ */
+
+.theme-toggle {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: var(--color-surface-elevated);
+  box-shadow: var(--shadow);
+
+  position: relative;
+  overflow: hidden;
+
+  transition: background var(--transition),
+              transform var(--transition-fast);
+}
+
+.theme-toggle:hover {
+  transform: scale(1.05);
+}
+
+.theme-toggle:active .flare {
+  opacity: 1;
+}
+
+/* ================================
+   Icons inside Theme Toggle
+   ================================ */
+
+.theme-toggle .icon {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+
+  opacity: 0;
+  transform: scale(0.6);
+
+  stroke: var(--color-text);
+  fill: none;
+
+  display: inline-block;
+
+  transition: opacity var(--transition),
+              transform var(--transition);
+}
+
+.theme-toggle .icon.visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.theme-toggle .sun svg,
+.theme-toggle .moon svg {
+  stroke: var(--color-text);
+  fill: none;
+}
+
+/* ================================
+   Flare Effect
+   ================================ */
+
+.theme-toggle .flare {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.6),
+    rgba(255, 255, 255, 0)
+  );
+
+  opacity: 0;
+  transition: opacity var(--transition);
+}

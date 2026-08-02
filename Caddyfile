@@ -1,0 +1,26 @@
+{
+    debug
+}
+
+# Landing page
+http://www.drewhyatt.us {
+    root * /srv/www
+    file_server
+}
+
+# Games web app
+http://games.drewhyatt.us {
+    root * /srv/games
+    file_server
+}
+
+# API
+http://api.drewhyatt.us {
+    reverse_proxy api:4000
+}
+
+# Local development (optional)
+http://localhost {
+    root * /srv/www
+    file_server
+}

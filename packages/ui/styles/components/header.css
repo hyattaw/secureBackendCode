@@ -1,0 +1,179 @@
+/* ================================
+   Header Component (Desktop-first)
+   ================================ */
+
+.app-header {
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 0 1rem;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  box-shadow: var(--shadow);
+
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+}
+
+.home-btn {
+  font-size: 1.4rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+
+  padding: 4px;
+  border-radius: var(--radius);
+  transition: background var(--transition-fast);
+}
+
+.home-btn:hover {
+  background: var(--color-accent-soft);
+}
+
+/* Breadcrumbs */
+.breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.95rem;
+}
+
+.breadcrumbs a {
+  text-decoration: none;
+  color: var(--color-text);
+  opacity: 0.85;
+}
+
+.breadcrumbs a:hover {
+  opacity: 1;
+}
+
+.crumb-sep {
+  opacity: 0.5;
+  margin: 0 0.2rem;
+}
+
+.page-title {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: var(--color-text);
+}
+
+.header-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.header-btn svg {
+  width: 22px;
+  height: 22px;
+  stroke: var(--color-text);
+}
+
+/* ================================
+   Mobile + Capacitor Enhancements
+   ================================ */
+
+@media (max-width: 600px) {
+  .app-header {
+    padding: env(safe-area-inset-top) 1rem 0.5rem 1rem;
+    height: auto;
+    min-height: 56px;
+
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  .header-left {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+
+  .app-title {
+    font-size: 1.25rem;
+    line-height: 1.3;
+  }
+
+  /* Hide breadcrumbs on mobile */
+  .breadcrumbs {
+    display: none;
+  }
+
+  .home-btn {
+    font-size: 1.5rem;
+    padding: 0.5rem;
+    border-radius: 12px;
+  }
+
+  .header-right {
+    gap: 0.5rem;
+  }
+
+  .header-btn {
+    padding: 0.75rem;
+    border-radius: 12px;
+  }
+
+  .header-btn svg {
+    width: 28px;
+    height: 28px;
+  }
+
+  /* Slide-in SettingsMenu drawer */
+  .settings-menu {
+    position: fixed;
+    top: env(safe-area-inset-top);
+    right: 0;
+    width: 80%;
+    max-width: 320px;
+    height: calc(100% - env(safe-area-inset-top));
+    background: var(--color-surface);
+    box-shadow: -4px 0 12px rgba(0,0,0,0.15);
+
+    transform: translateX(100%);
+    transition: transform 0.25s ease;
+
+    padding: 1rem;
+    overflow-y: auto;
+  }
+
+  .settings-menu.open {
+    transform: translateX(0);
+  }
+
+  .close-btn {
+    padding: 1rem;
+    width: 100%;
+    border-radius: 12px;
+    margin-top: 1rem;
+  }
+}
+
+/* ================================
+   Native Mobile (Capacitor)
+   ================================ */
+
+.native-mobile .app-header {
+  padding-top: env(safe-area-inset-top);
+}

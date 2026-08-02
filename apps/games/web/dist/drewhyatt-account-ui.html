@@ -1,0 +1,1205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark" />
+    <title>drewhyatt.us Account UI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-router-dom@6/dist/umd/react-router-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest" defer></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        bg: '#0f0f13',
+                        surface: '#1a1a24',
+                        surfaceRaised: '#22222f',
+                        border: '#2e2e3e',
+                        accent: '#6c63ff',
+                        accentHover: '#5a52d5',
+                        accentSecondary: '#00d4aa',
+                        textPrimary: '#f0f0f5',
+                        textSecondary: '#9494a8',
+                        textMuted: '#5c5c72',
+                        error: '#ff5b5b',
+                        success: '#00d4aa',
+                        warning: '#f59e0b',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                },
+            },
+        };
+    </script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Inter', system-ui, sans-serif; background: #0f0f13; color: #f0f0f5; min-height: 100vh; font-size: 0.95rem; line-height: 1.6; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #0f0f13; }
+        ::-webkit-scrollbar-thumb { background: #6c63ff44; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #6c63ff88; }
+        .auth-bg { background: radial-gradient(ellipse at 50% 30%, #1a1224 0%, #0f0f13 70%); min-height: 100vh; }
+        .card-shadow { box-shadow: 0 0 0 1px #2e2e3e, 0 8px 32px rgba(0,0,0,0.4); }
+        .input-focus:focus { box-shadow: 0 0 0 3px rgba(108,99,255,0.25); border-color: #6c63ff; outline: none; }
+        .btn-shine { background-image: linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0) 50%); }
+        .strength-bar { transition: width 0.3s ease, background-color 0.3s ease; }
+        .fade-in { animation: fadeIn 0.2s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .spinner { animation: spin 0.7s linear infinite; border: 2px solid rgba(255,255,255,0.2); border-top-color: #fff; border-radius: 50%; width: 18px; height: 18px; display: inline-block; }
+        .spinner-lg { width: 32px; height: 32px; border-width: 3px; border-color: rgba(108,99,255,0.2); border-top-color: #6c63ff; }
+        @keyframes toastIn { from { opacity: 0; transform: translateX(80px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes toastOut { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(80px); } }
+        .toast-in { animation: toastIn 0.25s ease-out; }
+        .toast-out { animation: toastOut 0.25s ease-in forwards; }
+        .tab-active { border-left: 3px solid #6c63ff; background: rgba(108,99,255,0.08); }
+        @media (max-width: 767px) {
+            .tab-active { border-left: none; border-bottom: 2px solid #6c63ff; }
+        }
+        input:-webkit-autofill,
+        input:-webkit-autofill:hover,
+        input:-webkit-autofill:focus {
+            -webkit-box-shadow: 0 0 0 30px #0f0f13 inset !important;
+            -webkit-text-fill-color: #f0f0f5 !important;
+            caret-color: #f0f0f5;
+        }
+    </style>
+</head>
+<body data-id="0">
+    <app-icon data-id="1" hidden data-icon="shield" data-palette="Dark"></app-icon>
+    <div data-id="2" id="root"></div>
+
+    <script type="text/babel">
+    /* ================================================================
+       drewhyatt.us Account UI — Single-file React 18 SPA
+       ================================================================ */
+
+    const { useState, useEffect, useContext, createContext, useCallback, useMemo, useRef } = React;
+    const { HashRouter, Routes, Route, Navigate, useNavigate, useLocation, Link } = ReactRouterDOM;
+
+    // ─── API Layer ───────────────────────────────────────────────────
+    const BASE_URL = 'https://drewhyatt.us';
+
+    async function apiFetch(path, options = {}) {
+        const url = `${BASE_URL}${path}`;
+        const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
+        const res = await fetch(url, { ...options, headers });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+            const err = new Error(data.message || data.error || `Request failed (${res.status})`);
+            err.status = res.status;
+            err.data = data;
+            throw err;
+        }
+        return data;
+    }
+
+    function getStoredTokens() {
+        return {
+            accessToken: localStorage.getItem('dh_access_token'),
+            refreshToken: localStorage.getItem('dh_refresh_token'),
+        };
+    }
+
+    function storeTokens(access, refresh) {
+        if (access) localStorage.setItem('dh_access_token', access);
+        if (refresh) localStorage.setItem('dh_refresh_token', refresh);
+    }
+
+    function clearTokens() {
+        localStorage.removeItem('dh_access_token');
+        localStorage.removeItem('dh_refresh_token');
+        localStorage.removeItem('dh_user');
+    }
+
+    const apiLogin = (email, password) =>
+        apiFetch('/api/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) });
+
+    const apiSignup = (email, username, password) =>
+        apiFetch('/api/auth/signup', { method: 'POST', body: JSON.stringify({ email, username, password }) });
+
+    const apiLogout = (token) =>
+        apiFetch('/api/auth/logout', { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
+
+    const apiRefreshToken = (refreshToken) =>
+        apiFetch('/api/auth/refresh', { method: 'POST', body: JSON.stringify({ refresh_token: refreshToken }) });
+
+    const apiVerifyEmail = (token) =>
+        apiFetch('/api/auth/verify-email', { method: 'POST', body: JSON.stringify({ token }) });
+
+    const apiForgotPassword = (email) =>
+        apiFetch('/api/auth/forgot-password', { method: 'POST', body: JSON.stringify({ email }) });
+
+    const apiResetPassword = (token, password) =>
+        apiFetch('/api/auth/reset-password', { method: 'POST', body: JSON.stringify({ token, password }) });
+
+    const apiGetMe = (token) =>
+        apiFetch('/api/auth/me', { method: 'GET', headers: { Authorization: `Bearer ${token}` } });
+
+    const apiDeleteAccount = (token) =>
+        apiFetch('/api/auth/account', { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+
+    const apiResendVerification = (token) =>
+        apiFetch('/api/auth/resend-verification', { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
+
+    const apiChangePassword = (token, currentPassword, newPassword) =>
+        apiFetch('/api/auth/change-password', {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }),
+        });
+
+    // Auto-refresh wrapper
+    async function authedFetch(apiCall, token) {
+        try {
+            return await apiCall(token);
+        } catch (err) {
+            if (err.status === 401) {
+                const { refreshToken } = getStoredTokens();
+                if (refreshToken) {
+                    try {
+                        const refreshData = await apiRefreshToken(refreshToken);
+                        storeTokens(refreshData.access_token, refreshData.refresh_token);
+                        return await apiCall(refreshData.access_token);
+                    } catch (e) {
+                        clearTokens();
+                        throw err;
+                    }
+                }
+                clearTokens();
+            }
+            throw err;
+        }
+    }
+
+    // ─── Hash query param hook ───────────────────────────────────────
+    function useHashQuery() {
+        const location = useLocation();
+        return useMemo(() => {
+            const hash = window.location.hash;
+            const qIndex = hash.indexOf('?');
+            if (qIndex === -1) return new URLSearchParams();
+            return new URLSearchParams(hash.substring(qIndex));
+        }, [location]);
+    }
+
+    // ─── Toast Context ──────────────────────────────────────────────
+    const ToastContext = createContext();
+
+    function ToastProvider({ children }) {
+        const [toasts, setToasts] = useState([]);
+        const toastIdRef = useRef(0);
+
+        const addToast = useCallback((message, type = 'info') => {
+            const id = ++toastIdRef.current;
+            setToasts(prev => {
+                const next = [...prev, { id, message, type, exiting: false }];
+                return next.slice(-3);
+            });
+            setTimeout(() => {
+                setToasts(prev => prev.map(t => t.id === id ? { ...t, exiting: true } : t));
+                setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 250);
+            }, 3000);
+        }, []);
+
+        return React.createElement(ToastContext.Provider, { value: { addToast } },
+            children,
+            React.createElement('div', { className: 'fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none', id: 'toast-container-a1b2' },
+                toasts.map(t =>
+                    React.createElement('div', {
+                        key: t.id,
+                        className: `pointer-events-auto px-4 py-3 rounded-lg text-sm font-medium card-shadow max-w-xs ${t.exiting ? 'toast-out' : 'toast-in'} ${
+                            t.type === 'error' ? 'bg-red-900/80 text-red-200 border border-red-700/50' :
+                            t.type === 'success' ? 'bg-emerald-900/80 text-emerald-200 border border-emerald-700/50' :
+                            'bg-surface text-textPrimary border border-border'
+                        }`
+                    }, t.message)
+                )
+            )
+        );
+    }
+
+    function useToast() { return useContext(ToastContext); }
+
+    // ─── Auth Context ───────────────────────────────────────────────
+    const AuthContext = createContext();
+
+    function AuthProvider({ children }) {
+        const [user, setUser] = useState(null);
+        const [accessToken, setAccessToken] = useState(null);
+        const [loading, setLoading] = useState(true);
+
+        useEffect(() => {
+            const { accessToken: storedToken, refreshToken: storedRefresh } = getStoredTokens();
+            if (!storedToken) { setLoading(false); return; }
+
+            (async () => {
+                try {
+                    const userData = await apiGetMe(storedToken);
+                    setUser(userData.user || userData);
+                    setAccessToken(storedToken);
+                } catch (err) {
+                    if (err.status === 401 && storedRefresh) {
+                        try {
+                            const refreshData = await apiRefreshToken(storedRefresh);
+                            storeTokens(refreshData.access_token, refreshData.refresh_token);
+                            const userData = await apiGetMe(refreshData.access_token);
+                            setUser(userData.user || userData);
+                            setAccessToken(refreshData.access_token);
+                        } catch (e) { clearTokens(); }
+                    } else { clearTokens(); }
+                }
+                setLoading(false);
+            })();
+        }, []);
+
+        const login = useCallback(async (email, password) => {
+            const data = await apiLogin(email, password);
+            storeTokens(data.access_token, data.refresh_token);
+            setAccessToken(data.access_token);
+            setUser(data.user);
+            return data;
+        }, []);
+
+        const signup = useCallback(async (email, username, password) => {
+            return await apiSignup(email, username, password);
+        }, []);
+
+        const logout = useCallback(async () => {
+            try { if (accessToken) await apiLogout(accessToken); } catch (e) {}
+            clearTokens();
+            setUser(null);
+            setAccessToken(null);
+        }, [accessToken]);
+
+        const refreshTokenFn = useCallback(async () => {
+            const { refreshToken } = getStoredTokens();
+            if (!refreshToken) throw new Error('No refresh token');
+            const data = await apiRefreshToken(refreshToken);
+            storeTokens(data.access_token, data.refresh_token);
+            setAccessToken(data.access_token);
+            return data.access_token;
+        }, []);
+
+        const deleteAccount = useCallback(async () => {
+            await apiDeleteAccount(accessToken);
+            clearTokens();
+            setUser(null);
+            setAccessToken(null);
+        }, [accessToken]);
+
+        const updateUser = useCallback((userData) => {
+            setUser(prev => ({ ...prev, ...userData }));
+        }, []);
+
+        const isAuthenticated = !!user && !!accessToken;
+
+        const value = useMemo(() => ({
+            user, accessToken, loading, isAuthenticated,
+            login, signup, logout, refreshToken: refreshTokenFn, deleteAccount, updateUser,
+        }), [user, accessToken, loading, isAuthenticated, login, signup, logout, refreshTokenFn, deleteAccount, updateUser]);
+
+        return React.createElement(AuthContext.Provider, { value }, children);
+    }
+
+    function useAuth() { return useContext(AuthContext); }
+
+    // ─── Shared Components ──────────────────────────────────────────
+
+    function Spinner({ size = 'sm', className = '' }) {
+        return React.createElement('span', {
+            className: `spinner ${size === 'lg' ? 'spinner-lg' : ''} ${className}`,
+            role: 'status',
+            'aria-label': 'Loading',
+        });
+    }
+
+    function LoadingScreen() {
+        return React.createElement('div', { className: 'auth-bg flex items-center justify-center min-h-screen' },
+            React.createElement(Spinner, { size: 'lg' })
+        );
+    }
+
+    function Logo({ size = 'md' }) {
+        const s = size === 'sm' ? 'w-8 h-8 text-sm' : 'w-10 h-10 text-base';
+        const textSize = size === 'sm' ? 'text-base' : 'text-lg';
+        return React.createElement('div', { className: 'flex items-center gap-3', id: 'logo-mark-d3h1' },
+            React.createElement('div', {
+                className: `${s} rounded-lg flex items-center justify-center font-bold`,
+                style: { background: 'linear-gradient(135deg, #6c63ff 0%, #00d4aa 100%)' },
+            }, 'DH'),
+            React.createElement('span', { className: `${textSize} font-semibold text-textPrimary` }, 'drewhyatt.us')
+        );
+    }
+
+    function Alert({ type = 'error', message, onDismiss }) {
+        if (!message) return null;
+        const styles = {
+            error: 'bg-red-950/60 border-red-800/50 text-red-300',
+            success: 'bg-emerald-950/60 border-emerald-800/50 text-emerald-300',
+            warning: 'bg-amber-950/60 border-amber-800/50 text-amber-300',
+        };
+        const icons = { error: '✕', success: '✓', warning: '!' };
+        return React.createElement('div', {
+            className: `flex items-start gap-3 p-3 rounded-lg border ${styles[type]} fade-in text-sm`,
+            role: 'alert',
+        },
+            React.createElement('span', { className: 'font-bold text-base flex-shrink-0 mt-0.5' }, icons[type]),
+            React.createElement('span', { className: 'flex-1' }, message),
+            onDismiss && React.createElement('button', {
+                className: 'ml-auto text-current opacity-60 hover:opacity-100 transition-opacity flex-shrink-0',
+                'aria-label': 'Dismiss',
+                onClick: onDismiss,
+            }, '✕')
+        );
+    }
+
+    function InputField({ label, type = 'text', value, onChange, error, autoComplete, placeholder, minLength, id, disabled }) {
+        const [showPassword, setShowPassword] = useState(false);
+        const isPassword = type === 'password';
+        const inputType = isPassword ? (showPassword ? 'text' : 'password') : type;
+        const inputId = id || `input-${label?.replace(/\s+/g, '-').toLowerCase()}-f4k2`;
+
+        return React.createElement('div', { className: 'space-y-1.5' },
+            label && React.createElement('label', { htmlFor: inputId, className: 'block text-sm font-medium text-textSecondary' }, label),
+            React.createElement('div', { className: 'relative' },
+                React.createElement('input', {
+                    id: inputId,
+                    type: inputType,
+                    value,
+                    onChange: e => onChange(e.target.value),
+                    autoComplete,
+                    placeholder,
+                    minLength,
+                    disabled,
+                    className: `w-full px-3.5 py-2.5 bg-bg border rounded-lg text-textPrimary placeholder-textMuted text-base input-focus transition-all duration-150 ${
+                        error ? 'border-error' : 'border-border'
+                    } ${isPassword ? 'pr-11' : ''} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`,
+                }),
+                isPassword && React.createElement('button', {
+                    type: 'button',
+                    className: 'absolute right-3 top-1/2 -translate-y-1/2 text-textMuted hover:text-textSecondary transition-colors p-1',
+                    'aria-label': showPassword ? 'Hide password' : 'Show password',
+                    tabIndex: -1,
+                    onClick: () => setShowPassword(!showPassword),
+                }, showPassword ? '◉' : '◎')
+            ),
+            error && React.createElement('p', { className: 'text-xs text-error mt-1' }, error)
+        );
+    }
+
+    function PrimaryButton({ children, onClick, loading: isLoading, disabled, type = 'button', className = '' }) {
+        return React.createElement('button', {
+            type,
+            onClick,
+            disabled: disabled || isLoading,
+            className: `w-full py-2.5 px-4 rounded-lg font-semibold text-white bg-accent hover:bg-accentHover transition-all duration-150 btn-shine flex items-center justify-center gap-2 min-h-[44px] ${
+                (disabled || isLoading) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+            } ${className}`,
+        }, isLoading ? React.createElement(Spinner) : null, children);
+    }
+
+    function SecondaryButton({ children, onClick, className = '' }) {
+        return React.createElement('button', {
+            type: 'button',
+            onClick,
+            className: `w-full py-2.5 px-4 rounded-lg font-semibold text-accent border border-accent hover:bg-accent/10 transition-all duration-150 flex items-center justify-center gap-2 min-h-[44px] cursor-pointer ${className}`,
+        }, children);
+    }
+
+    function AuthCard({ children }) {
+        return React.createElement('div', { className: 'auth-bg flex items-center justify-center min-h-screen px-4 py-8' },
+            React.createElement('div', { className: 'w-full max-w-md p-6 md:p-8 bg-surface rounded-2xl card-shadow fade-in' }, children)
+        );
+    }
+
+    function PasswordStrength({ password }) {
+        const score = useMemo(() => {
+            let s = 0;
+            if (!password) return 0;
+            if (password.length >= 8) s += 2;
+            if (password.length >= 12) s += 1;
+            if (/[A-Z]/.test(password)) s += 1;
+            if (/[a-z]/.test(password)) s += 1;
+            if (/[0-9]/.test(password)) s += 1;
+            if (/[^A-Za-z0-9]/.test(password)) s += 2;
+            return s;
+        }, [password]);
+
+        if (!password) return null;
+
+        let label, color, width;
+        if (score <= 3) { label = 'Weak'; color = '#ff5b5b'; width = '30%'; }
+        else if (score <= 6) { label = 'Fair'; color = '#f59e0b'; width = '65%'; }
+        else { label = 'Strong'; color = '#00d4aa'; width = '100%'; }
+
+        return React.createElement('div', { className: 'space-y-1 mt-1.5' },
+            React.createElement('div', { className: 'h-1.5 bg-bg rounded-full overflow-hidden' },
+                React.createElement('div', { className: 'h-full rounded-full strength-bar', style: { width, backgroundColor: color } })
+            ),
+            React.createElement('p', { className: 'text-xs', style: { color } }, label)
+        );
+    }
+
+    function Divider({ text }) {
+        return React.createElement('div', { className: 'flex items-center gap-3 my-5' },
+            React.createElement('div', { className: 'flex-1 h-px bg-border' }),
+            text && React.createElement('span', { className: 'text-textMuted text-sm' }, text),
+            React.createElement('div', { className: 'flex-1 h-px bg-border' })
+        );
+    }
+
+    // ─── Error Boundary ─────────────────────────────────────────────
+    class ErrorBoundary extends React.Component {
+        constructor(props) { super(props); this.state = { hasError: false }; }
+        static getDerivedStateFromError() { return { hasError: true }; }
+        render() {
+            if (this.state.hasError) {
+                return React.createElement('div', { className: 'auth-bg flex items-center justify-center min-h-screen px-4' },
+                    React.createElement('div', { className: 'bg-surface p-8 rounded-2xl card-shadow max-w-md w-full text-center space-y-4' },
+                        React.createElement('div', { className: 'text-4xl' }, '⚠'),
+                        React.createElement('h2', { className: 'text-xl font-bold text-textPrimary' }, 'Something went wrong'),
+                        React.createElement('p', { className: 'text-textSecondary text-sm' }, 'An unexpected error occurred. Please refresh the page.'),
+                        React.createElement('button', {
+                            className: 'px-6 py-2.5 bg-accent text-white rounded-lg font-semibold hover:bg-accentHover transition-colors cursor-pointer',
+                            onClick: () => window.location.reload(),
+                        }, 'Refresh Page')
+                    )
+                );
+            }
+            return this.props.children;
+        }
+    }
+
+    // ─── Protected Route ────────────────────────────────────────────
+    function ProtectedRoute({ children }) {
+        const { isAuthenticated, loading } = useAuth();
+        if (loading) return React.createElement(LoadingScreen);
+        if (!isAuthenticated) return React.createElement(Navigate, { to: '/login', replace: true });
+        return children;
+    }
+
+    // ─── Login Page ─────────────────────────────────────────────────
+    function LoginPage() {
+        const { login, isAuthenticated } = useAuth();
+        const navigate = useNavigate();
+        const [email, setEmail] = useState('');
+        const [password, setPassword] = useState('');
+        const [loading, setLoading] = useState(false);
+        const [error, setError] = useState('');
+        const [fieldErrors, setFieldErrors] = useState({});
+
+        useEffect(() => { if (isAuthenticated) navigate('/account', { replace: true }); }, [isAuthenticated]);
+
+        const validate = () => {
+            const errs = {};
+            if (!email.trim()) errs.email = 'Email is required';
+            else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errs.email = 'Invalid email address';
+            if (!password) errs.password = 'Password is required';
+            setFieldErrors(errs);
+            return Object.keys(errs).length === 0;
+        };
+
+        const handleSubmit = async (e) => {
+            e.preventDefault();
+            setError('');
+            if (!validate()) return;
+            setLoading(true);
+            try {
+                await login(email, password);
+                navigate('/account');
+            } catch (err) {
+                setError(err.message || 'Invalid credentials');
+            }
+            setLoading(false);
+        };
+
+        return React.createElement(AuthCard, null,
+            React.createElement('div', { className: 'flex flex-col items-center mb-6' },
+                React.createElement(Logo),
+                React.createElement('h1', { className: 'text-2xl font-bold mt-6 text-textPrimary tracking-tight' }, 'Welcome back'),
+                React.createElement('p', { className: 'text-textSecondary text-sm mt-1' }, 'Sign in to your account')
+            ),
+            error && React.createElement('div', { className: 'mb-4' }, React.createElement(Alert, { type: 'error', message: error, onDismiss: () => setError('') })),
+            React.createElement('form', { className: 'space-y-4', onSubmit: handleSubmit, id: 'login-form-x1y2' },
+                React.createElement(InputField, { label: 'Email', type: 'email', value: email, onChange: setEmail, error: fieldErrors.email, autoComplete: 'email', placeholder: 'you@example.com' }),
+                React.createElement('div', { className: 'space-y-1' },
+                    React.createElement(InputField, { label: 'Password', type: 'password', value: password, onChange: setPassword, error: fieldErrors.password, autoComplete: 'current-password', placeholder: '••••••••' }),
+                    React.createElement('div', { className: 'flex justify-end mt-1' },
+                        React.createElement(Link, { to: '/forgot-password', className: 'text-xs text-accent hover:text-accentHover transition-colors' }, 'Forgot password?')
+                    )
+                ),
+                React.createElement(PrimaryButton, { type: 'submit', loading }, 'Sign In')
+            ),
+            React.createElement(Divider, { text: 'or' }),
+            React.createElement('p', { className: 'text-center text-sm text-textSecondary' },
+                "Don't have an account? ",
+                React.createElement(Link, { to: '/signup', className: 'text-accent font-semibold hover:text-accentHover transition-colors' }, 'Sign up')
+            )
+        );
+    }
+
+    // ─── Signup Page ────────────────────────────────────────────────
+    function SignupPage() {
+        const { signup, isAuthenticated } = useAuth();
+        const navigate = useNavigate();
+        const [username, setUsername] = useState('');
+        const [email, setEmail] = useState('');
+        const [password, setPassword] = useState('');
+        const [confirmPassword, setConfirmPassword] = useState('');
+        const [loading, setLoading] = useState(false);
+        const [error, setError] = useState('');
+        const [success, setSuccess] = useState('');
+        const [fieldErrors, setFieldErrors] = useState({});
+
+        useEffect(() => { if (isAuthenticated) navigate('/account', { replace: true }); }, [isAuthenticated]);
+
+        const validate = () => {
+            const errs = {};
+            if (!username.trim()) errs.username = 'Username is required';
+            else if (username.length < 3) errs.username = 'Minimum 3 characters';
+            else if (!/^[a-zA-Z0-9_]+$/.test(username)) errs.username = 'Only letters, numbers, and underscores';
+            if (!email.trim()) errs.email = 'Email is required';
+            else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errs.email = 'Invalid email address';
+            if (!password) errs.password = 'Password is required';
+            else if (password.length < 8) errs.password = 'Minimum 8 characters';
+            if (password !== confirmPassword) errs.confirmPassword = 'Passwords do not match';
+            setFieldErrors(errs);
+            return Object.keys(errs).length === 0;
+        };
+
+        const handleSubmit = async (e) => {
+            e.preventDefault();
+            setError('');
+            if (!validate()) return;
+            setLoading(true);
+            try {
+                await signup(email, username, password);
+                setSuccess('Account created! Check your email to verify your account.');
+                setTimeout(() => navigate('/login'), 2000);
+            } catch (err) {
+                setError(err.message || 'Signup failed');
+            }
+            setLoading(false);
+        };
+
+        return React.createElement(AuthCard, null,
+            React.createElement('div', { className: 'flex flex-col items-center mb-6' },
+                React.createElement(Logo),
+                React.createElement('h1', { className: 'text-2xl font-bold mt-6 text-textPrimary tracking-tight' }, 'Create your account'),
+                React.createElement('p', { className: 'text-textSecondary text-sm mt-1' }, 'Join drewhyatt.us')
+            ),
+            error && React.createElement('div', { className: 'mb-4' }, React.createElement(Alert, { type: 'error', message: error, onDismiss: () => setError('') })),
+            success && React.createElement('div', { className: 'mb-4' }, React.createElement(Alert, { type: 'success', message: success })),
+            React.createElement('form', { className: 'space-y-4', onSubmit: handleSubmit, id: 'signup-form-z3w4' },
+                React.createElement(InputField, { label: 'Username', value: username, onChange: setUsername, error: fieldErrors.username, autoComplete: 'username', placeholder: 'cooluser_42' }),
+                React.createElement(InputField, { label: 'Email', type: 'email', value: email, onChange: setEmail, error: fieldErrors.email, autoComplete: 'email', placeholder: 'you@example.com' }),
+                React.createElement('div', null,
+                    React.createElement(InputField, { label: 'Password', type: 'password', value: password, onChange: setPassword, error: fieldErrors.password, autoComplete: 'new-password', placeholder: '••••••••', minLength: 8 }),
+                    React.createElement(PasswordStrength, { password })
+                ),
+                React.createElement(InputField, { label: 'Confirm Password', type: 'password', value: confirmPassword, onChange: setConfirmPassword, error: fieldErrors.confirmPassword, autoComplete: 'new-password', placeholder: '••••••••' }),
+                React.createElement(PrimaryButton, { type: 'submit', loading, disabled: !!success }, 'Create Account')
+            ),
+            React.createElement(Divider, { text: 'or' }),
+            React.createElement('p', { className: 'text-center text-sm text-textSecondary' },
+                'Already have an account? ',
+                React.createElement(Link, { to: '/login', className: 'text-accent font-semibold hover:text-accentHover transition-colors' }, 'Sign in')
+            )
+        );
+    }
+
+    // ─── Verify Email Page ──────────────────────────────────────────
+    function VerifyEmailPage() {
+        const query = useHashQuery();
+        const token = query.get('token');
+        const [status, setStatus] = useState('loading'); // loading | success | error
+        const [errorMsg, setErrorMsg] = useState('');
+        const { accessToken, isAuthenticated } = useAuth();
+        const { addToast } = useToast();
+        const hasCalledRef = useRef(false);
+
+        useEffect(() => {
+            if (hasCalledRef.current) return;
+            if (!token) { setStatus('error'); setErrorMsg('Invalid verification link. No token provided.'); return; }
+            hasCalledRef.current = true;
+            (async () => {
+                try {
+                    await apiVerifyEmail(token);
+                    setStatus('success');
+                } catch (err) {
+                    setStatus('error');
+                    setErrorMsg(err.message || 'Verification failed');
+                }
+            })();
+        }, [token]);
+
+        const handleResend = async () => {
+            if (!isAuthenticated) { addToast('Please log in first to resend verification.', 'error'); return; }
+            try {
+                await apiResendVerification(accessToken);
+                addToast('Verification email resent!', 'success');
+            } catch (err) { addToast(err.message || 'Failed to resend', 'error'); }
+        };
+
+        return React.createElement(AuthCard, null,
+            React.createElement('div', { className: 'flex flex-col items-center text-center space-y-4' },
+                React.createElement(Logo),
+                status === 'loading' && React.createElement(React.Fragment, null,
+                    React.createElement('div', { className: 'mt-8' }, React.createElement(Spinner, { size: 'lg' })),
+                    React.createElement('p', { className: 'text-textSecondary mt-4' }, 'Verifying your email…')
+                ),
+                status === 'success' && React.createElement(React.Fragment, null,
+                    React.createElement('div', { className: 'w-16 h-16 rounded-full bg-success/20 flex items-center justify-center mt-4' },
+                        React.createElement('span', { className: 'text-3xl text-success' }, '✓')
+                    ),
+                    React.createElement('h2', { className: 'text-xl font-bold text-textPrimary' }, 'Email Verified!'),
+                    React.createElement('p', { className: 'text-textSecondary text-sm' }, 'Your account has been successfully verified. You can now sign in.'),
+                    React.createElement(Link, { to: '/login' },
+                        React.createElement(PrimaryButton, null, 'Go to Login')
+                    )
+                ),
+                status === 'error' && React.createElement(React.Fragment, null,
+                    React.createElement('div', { className: 'w-16 h-16 rounded-full bg-error/20 flex items-center justify-center mt-4' },
+                        React.createElement('span', { className: 'text-3xl text-error' }, '✕')
+                    ),
+                    React.createElement('h2', { className: 'text-xl font-bold text-textPrimary' }, 'Verification Failed'),
+                    React.createElement('p', { className: 'text-textSecondary text-sm' }, errorMsg),
+                    React.createElement('button', {
+                        className: 'text-accent text-sm font-semibold hover:text-accentHover transition-colors cursor-pointer',
+                        onClick: handleResend,
+                    }, 'Resend Verification Email'),
+                    React.createElement(Link, { to: '/login', className: 'text-textMuted text-sm hover:text-textSecondary transition-colors' }, 'Back to Login')
+                )
+            )
+        );
+    }
+
+    // ─── Forgot Password Page ───────────────────────────────────────
+    function ForgotPasswordPage() {
+        const [email, setEmail] = useState('');
+        const [loading, setLoading] = useState(false);
+        const [sent, setSent] = useState(false);
+        const [error, setError] = useState('');
+        const [cooldown, setCooldown] = useState(0);
+        const cooldownRef = useRef(null);
+
+        const startCooldown = () => {
+            setCooldown(60);
+            cooldownRef.current = setInterval(() => {
+                setCooldown(prev => {
+                    if (prev <= 1) { clearInterval(cooldownRef.current); return 0; }
+                    return prev - 1;
+                });
+            }, 1000);
+        };
+
+        useEffect(() => () => { if (cooldownRef.current) clearInterval(cooldownRef.current); }, []);
+
+        const handleSubmit = async (e) => {
+            e.preventDefault();
+            setError('');
+            if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setError('Please enter a valid email address'); return; }
+            setLoading(true);
+            try {
+                await apiForgotPassword(email);
+                setSent(true);
+                startCooldown();
+            } catch (err) { setError(err.message || 'Failed to send reset link'); }
+            setLoading(false);
+        };
+
+        const handleResend = async () => {
+            if (cooldown > 0) return;
+            setLoading(true);
+            try {
+                await apiForgotPassword(email);
+                startCooldown();
+            } catch (err) { setError(err.message || 'Failed to resend'); }
+            setLoading(false);
+        };
+
+        if (sent) {
+            return React.createElement(AuthCard, null,
+                React.createElement('div', { className: 'flex flex-col items-center text-center space-y-4' },
+                    React.createElement(Logo),
+                    React.createElement('div', { className: 'w-16 h-16 rounded-full bg-success/20 flex items-center justify-center mt-4' },
+                        React.createElement('span', { className: 'text-3xl text-success' }, '✉')
+                    ),
+                    React.createElement('h2', { className: 'text-xl font-bold text-textPrimary' }, 'Check your inbox'),
+                    React.createElement('p', { className: 'text-textSecondary text-sm' }, `We sent a password reset link to ${email}`),
+                    React.createElement('button', {
+                        className: `text-sm font-semibold transition-colors cursor-pointer ${cooldown > 0 ? 'text-textMuted cursor-not-allowed' : 'text-accent hover:text-accentHover'}`,
+                        onClick: handleResend,
+                        disabled: cooldown > 0,
+                    }, cooldown > 0 ? `Resend in ${cooldown}s` : "Didn't receive it? Resend"),
+                    React.createElement(Link, { to: '/login', className: 'text-textMuted text-sm hover:text-textSecondary transition-colors' }, 'Back to login')
+                )
+            );
+        }
+
+        return React.createElement(AuthCard, null,
+            React.createElement('div', { className: 'flex flex-col items-center mb-6' },
+                React.createElement(Logo),
+                React.createElement(Link, { to: '/login', className: 'self-start flex items-center gap-1 text-textMuted hover:text-textSecondary text-sm transition-colors mt-4' }, '← Back to login'),
+                React.createElement('h1', { className: 'text-2xl font-bold mt-4 text-textPrimary tracking-tight' }, 'Reset your password'),
+                React.createElement('p', { className: 'text-textSecondary text-sm mt-1 text-center' }, "Enter your email and we'll send you a reset link.")
+            ),
+            error && React.createElement('div', { className: 'mb-4' }, React.createElement(Alert, { type: 'error', message: error, onDismiss: () => setError('') })),
+            React.createElement('form', { className: 'space-y-4', onSubmit: handleSubmit, id: 'forgot-form-m5n6' },
+                React.createElement(InputField, { label: 'Email', type: 'email', value: email, onChange: setEmail, autoComplete: 'email', placeholder: 'you@example.com' }),
+                React.createElement(PrimaryButton, { type: 'submit', loading }, 'Send Reset Link')
+            )
+        );
+    }
+
+    // ─── Reset Password Page ────────────────────────────────────────
+    function ResetPasswordPage() {
+        const query = useHashQuery();
+        const token = query.get('token');
+        const navigate = useNavigate();
+        const [password, setPassword] = useState('');
+        const [confirmPassword, setConfirmPassword] = useState('');
+        const [loading, setLoading] = useState(false);
+        const [error, setError] = useState('');
+        const [success, setSuccess] = useState(false);
+        const [countdown, setCountdown] = useState(3);
+        const [fieldErrors, setFieldErrors] = useState({});
+
+        useEffect(() => {
+            if (success) {
+                const timer = setInterval(() => {
+                    setCountdown(p => {
+                        if (p <= 1) { clearInterval(timer); navigate('/login'); return 0; }
+                        return p - 1;
+                    });
+                }, 1000);
+                return () => clearInterval(timer);
+            }
+        }, [success]);
+
+        if (!token) {
+            return React.createElement(AuthCard, null,
+                React.createElement('div', { className: 'flex flex-col items-center text-center space-y-4' },
+                    React.createElement(Logo),
+                    React.createElement('div', { className: 'w-16 h-16 rounded-full bg-error/20 flex items-center justify-center mt-4' },
+                        React.createElement('span', { className: 'text-3xl text-error' }, '✕')
+                    ),
+                    React.createElement('h2', { className: 'text-xl font-bold text-textPrimary' }, 'Invalid Reset Link'),
+                    React.createElement('p', { className: 'text-textSecondary text-sm' }, 'This password reset link is invalid or missing a token.'),
+                    React.createElement(Link, { to: '/login', className: 'text-accent text-sm font-semibold hover:text-accentHover transition-colors' }, 'Back to Login')
+                )
+            );
+        }
+
+        if (success) {
+            return React.createElement(AuthCard, null,
+                React.createElement('div', { className: 'flex flex-col items-center text-center space-y-4' },
+                    React.createElement(Logo),
+                    React.createElement('div', { className: 'w-16 h-16 rounded-full bg-success/20 flex items-center justify-center mt-4' },
+                        React.createElement('span', { className: 'text-3xl text-success' }, '✓')
+                    ),
+                    React.createElement('h2', { className: 'text-xl font-bold text-textPrimary' }, 'Password Updated!'),
+                    React.createElement('p', { className: 'text-textSecondary text-sm' }, `Redirecting to login in ${countdown}s…`),
+                    React.createElement(Link, { to: '/login' },
+                        React.createElement(PrimaryButton, null, 'Sign In')
+                    )
+                )
+            );
+        }
+
+        const validate = () => {
+            const errs = {};
+            if (!password) errs.password = 'Password is required';
+            else if (password.length < 8) errs.password = 'Minimum 8 characters';
+            if (password !== confirmPassword) errs.confirmPassword = 'Passwords do not match';
+            setFieldErrors(errs);
+            return Object.keys(errs).length === 0;
+        };
+
+        const handleSubmit = async (e) => {
+            e.preventDefault();
+            setError('');
+            if (!validate()) return;
+            setLoading(true);
+            try {
+                await apiResetPassword(token, password);
+                setSuccess(true);
+            } catch (err) {
+                if (err.message?.toLowerCase().includes('expired') || err.message?.toLowerCase().includes('invalid')) {
+                    setError('This reset link has expired. Please request a new one.');
+                } else { setError(err.message || 'Reset failed'); }
+            }
+            setLoading(false);
+        };
+
+        return React.createElement(AuthCard, null,
+            React.createElement('div', { className: 'flex flex-col items-center mb-6' },
+                React.createElement(Logo),
+                React.createElement('h1', { className: 'text-2xl font-bold mt-6 text-textPrimary tracking-tight' }, 'Set new password'),
+                React.createElement('p', { className: 'text-textSecondary text-sm mt-1' }, 'Choose a strong password for your account.')
+            ),
+            error && React.createElement('div', { className: 'mb-4' },
+                React.createElement(Alert, { type: 'error', message: error, onDismiss: () => setError('') }),
+                error.includes('expired') && React.createElement(Link, { to: '/forgot-password', className: 'text-accent text-sm font-semibold mt-2 inline-block hover:text-accentHover transition-colors' }, 'Request a new link →')
+            ),
+            React.createElement('form', { className: 'space-y-4', onSubmit: handleSubmit, id: 'reset-form-p7q8' },
+                React.createElement('div', null,
+                    React.createElement(InputField, { label: 'New Password', type: 'password', value: password, onChange: setPassword, error: fieldErrors.password, autoComplete: 'new-password', placeholder: '••••••••' }),
+                    React.createElement(PasswordStrength, { password })
+                ),
+                React.createElement(InputField, { label: 'Confirm New Password', type: 'password', value: confirmPassword, onChange: setConfirmPassword, error: fieldErrors.confirmPassword, autoComplete: 'new-password', placeholder: '••••••••' }),
+                React.createElement(PrimaryButton, { type: 'submit', loading }, 'Reset Password')
+            )
+        );
+    }
+
+    // ─── Account Dashboard ──────────────────────────────────────────
+    function AccountDashboard() {
+        const { user, accessToken, logout, isAuthenticated } = useAuth();
+        const navigate = useNavigate();
+        const [activeTab, setActiveTab] = useState('profile');
+        const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+        const handleLogout = async () => {
+            await logout();
+            navigate('/login');
+        };
+
+        const tabs = [
+            { id: 'profile', label: 'Profile', icon: '👤' },
+            { id: 'security', label: 'Security', icon: '🛡' },
+            { id: 'danger', label: 'Danger Zone', icon: '⚠', danger: true },
+        ];
+
+        const initials = user?.username ? user.username.substring(0, 2).toUpperCase() : 'U';
+
+        return React.createElement('div', { className: 'min-h-screen bg-bg' },
+            // Top nav
+            React.createElement('nav', { className: 'bg-surface border-b border-border sticky top-0 z-40', id: 'dashboard-nav-r9s0' },
+                React.createElement('div', { className: 'max-w-6xl mx-auto px-4 md:px-6 h-16 flex items-center justify-between' },
+                    React.createElement(Logo, { size: 'sm' }),
+                    React.createElement('div', { className: 'flex items-center gap-3' },
+                        React.createElement('div', { className: 'w-9 h-9 rounded-full bg-accent flex items-center justify-center text-white text-sm font-bold' }, initials),
+                        React.createElement('span', { className: 'text-textPrimary text-sm font-medium hidden md:block' }, user?.username || 'User'),
+                        React.createElement('button', {
+                            className: 'ml-2 px-3 py-1.5 text-sm text-textMuted hover:text-textPrimary border border-border rounded-lg hover:border-textMuted transition-all cursor-pointer',
+                            onClick: handleLogout,
+                            'aria-label': 'Logout',
+                        }, 'Logout')
+                    )
+                )
+            ),
+
+            // Content
+            React.createElement('div', { className: 'max-w-6xl mx-auto px-4 md:px-6 py-6 md:py-8' },
+                React.createElement('div', { className: 'flex flex-col md:flex-row gap-6' },
+                    // Sidebar / horizontal tabs
+                    React.createElement('div', { className: 'md:w-56 flex-shrink-0' },
+                        React.createElement('nav', { className: 'flex md:flex-col gap-1 overflow-x-auto md:overflow-visible pb-2 md:pb-0', 'aria-label': 'Dashboard navigation' },
+                            tabs.map(tab =>
+                                React.createElement('button', {
+                                    key: tab.id,
+                                    className: `flex items-center gap-2.5 px-4 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap cursor-pointer min-h-[44px] ${
+                                        activeTab === tab.id
+                                            ? 'tab-active text-textPrimary bg-accent/10'
+                                            : `text-textSecondary hover:text-textPrimary hover:bg-surfaceRaised ${tab.danger ? 'text-error hover:text-error' : ''}`
+                                    }`,
+                                    onClick: () => setActiveTab(tab.id),
+                                }, React.createElement('span', null, tab.icon), tab.label)
+                            )
+                        )
+                    ),
+
+                    // Tab content
+                    React.createElement('div', { className: 'flex-1 min-w-0 fade-in', key: activeTab },
+                        activeTab === 'profile' && React.createElement(ProfileTab),
+                        activeTab === 'security' && React.createElement(SecurityTab),
+                        activeTab === 'danger' && React.createElement(DangerTab)
+                    )
+                )
+            ),
+
+            // Footer
+            React.createElement('footer', { className: 'border-t border-border py-6 mt-8' },
+                React.createElement('p', { className: 'text-center text-textMuted text-xs' }, 'Made by Copilot')
+            )
+        );
+    }
+
+    // ─── Profile Tab ────────────────────────────────────────────────
+    function ProfileTab() {
+        const { user, accessToken, isAuthenticated } = useAuth();
+        const { addToast } = useToast();
+
+        const copyToClipboard = (text) => {
+            navigator.clipboard.writeText(text).then(() => addToast('Copied to clipboard!', 'success')).catch(() => addToast('Failed to copy', 'error'));
+        };
+
+        const handleResendVerification = async () => {
+            try {
+                await apiResendVerification(accessToken);
+                addToast('Verification email resent!', 'success');
+            } catch (err) { addToast(err.message || 'Failed to resend', 'error'); }
+        };
+
+        const memberSince = user?.created_at ? new Date(user.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Unknown';
+
+        const fields = [
+            { label: 'Username', value: user?.username || '—', copyable: true },
+            { label: 'Email', value: user?.email || '—' },
+            ...(user?.id ? [{ label: 'Account ID', value: user.id }] : []),
+            { label: 'Member Since', value: memberSince },
+        ];
+
+        return React.createElement('div', { className: 'space-y-6' },
+            React.createElement('div', { className: 'bg-surface rounded-xl card-shadow p-5 md:p-6' },
+                React.createElement('h2', { className: 'text-lg font-bold text-textPrimary mb-5' }, 'Profile Information'),
+                React.createElement('div', { className: 'space-y-4' },
+                    fields.map(field =>
+                        React.createElement('div', { key: field.label, className: 'space-y-1' },
+                            React.createElement('label', { className: 'text-xs font-medium text-textMuted uppercase tracking-wider' }, field.label),
+                            React.createElement('div', { className: 'flex items-center gap-2 px-3.5 py-2.5 bg-bg border border-border rounded-lg' },
+                                React.createElement('span', { className: 'text-textPrimary text-sm flex-1 truncate' }, String(field.value)),
+                                field.copyable && React.createElement('button', {
+                                    className: 'text-textMuted hover:text-accent transition-colors cursor-pointer p-1 flex-shrink-0',
+                                    'aria-label': 'Copy to clipboard',
+                                    onClick: () => copyToClipboard(String(field.value)),
+                                }, '📋')
+                            )
+                        )
+                    ),
+                    // Email verified status
+                    React.createElement('div', { className: 'space-y-1' },
+                        React.createElement('label', { className: 'text-xs font-medium text-textMuted uppercase tracking-wider' }, 'Email Status'),
+                        React.createElement('div', { className: 'flex items-center gap-2' },
+                            user?.email_verified
+                                ? React.createElement('span', { className: 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-success/20 text-success' }, '✓ Verified')
+                                : React.createElement(React.Fragment, null,
+                                    React.createElement('span', { className: 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-warning/20 text-warning' }, '⏳ Not Verified'),
+                                    React.createElement('button', {
+                                        className: 'text-accent text-xs font-semibold hover:text-accentHover transition-colors cursor-pointer',
+                                        onClick: handleResendVerification,
+                                    }, 'Resend verification')
+                                )
+                        )
+                    )
+                ),
+                React.createElement('div', { className: 'mt-6 pt-4 border-t border-border' },
+                    React.createElement('p', { className: 'text-xs text-textMuted' }, 'Contact support to update your information.')
+                )
+            )
+        );
+    }
+
+    // ─── Security Tab ───────────────────────────────────────────────
+    function SecurityTab() {
+        const { accessToken } = useAuth();
+        const { addToast } = useToast();
+        const [currentPassword, setCurrentPassword] = useState('');
+        const [newPassword, setNewPassword] = useState('');
+        const [confirmNewPassword, setConfirmNewPassword] = useState('');
+        const [loading, setLoading] = useState(false);
+        const [error, setError] = useState('');
+        const [success, setSuccess] = useState('');
+        const [fieldErrors, setFieldErrors] = useState({});
+
+        const validate = () => {
+            const errs = {};
+            if (!currentPassword) errs.currentPassword = 'Current password is required';
+            if (!newPassword) errs.newPassword = 'New password is required';
+            else if (newPassword.length < 8) errs.newPassword = 'Minimum 8 characters';
+            if (newPassword !== confirmNewPassword) errs.confirmNewPassword = 'Passwords do not match';
+            setFieldErrors(errs);
+            return Object.keys(errs).length === 0;
+        };
+
+        const handleSubmit = async (e) => {
+            e.preventDefault();
+            setError('');
+            setSuccess('');
+            if (!validate()) return;
+            setLoading(true);
+            try {
+                await apiChangePassword(accessToken, currentPassword, newPassword);
+                setSuccess('Password updated successfully');
+                setCurrentPassword('');
+                setNewPassword('');
+                setConfirmNewPassword('');
+                setFieldErrors({});
+                addToast('Password updated!', 'success');
+            } catch (err) { setError(err.message || 'Failed to update password'); }
+            setLoading(false);
+        };
+
+        return React.createElement('div', { className: 'space-y-6' },
+            React.createElement('div', { className: 'bg-surface rounded-xl card-shadow p-5 md:p-6' },
+                React.createElement('h2', { className: 'text-lg font-bold text-textPrimary mb-5' }, 'Password & Security'),
+                React.createElement('h3', { className: 'text-sm font-semibold text-textSecondary mb-4' }, 'Change Password'),
+                error && React.createElement('div', { className: 'mb-4' }, React.createElement(Alert, { type: 'error', message: error, onDismiss: () => setError('') })),
+                success && React.createElement('div', { className: 'mb-4' }, React.createElement(Alert, { type: 'success', message: success, onDismiss: () => setSuccess('') })),
+                React.createElement('form', { className: 'space-y-4 max-w-md', onSubmit: handleSubmit, id: 'change-pw-form-t1u2' },
+                    React.createElement(InputField, { label: 'Current Password', type: 'password', value: currentPassword, onChange: setCurrentPassword, error: fieldErrors.currentPassword, autoComplete: 'current-password', placeholder: '••••••••' }),
+                    React.createElement('div', null,
+                        React.createElement(InputField, { label: 'New Password', type: 'password', value: newPassword, onChange: setNewPassword, error: fieldErrors.newPassword, autoComplete: 'new-password', placeholder: '••••••••' }),
+                        React.createElement(PasswordStrength, { password: newPassword })
+                    ),
+                    React.createElement(InputField, { label: 'Confirm New Password', type: 'password', value: confirmNewPassword, onChange: setConfirmNewPassword, error: fieldErrors.confirmNewPassword, autoComplete: 'new-password', placeholder: '••••••••' }),
+                    React.createElement(PrimaryButton, { type: 'submit', loading, className: 'max-w-xs' }, 'Update Password')
+                ),
+
+                // Sessions section
+                React.createElement('div', { className: 'mt-8 pt-6 border-t border-border' },
+                    React.createElement('h3', { className: 'text-sm font-semibold text-textSecondary mb-4' }, 'Active Sessions'),
+                    React.createElement('p', { className: 'text-xs text-textMuted mb-3' }, 'Session management coming soon'),
+                    React.createElement('div', { className: 'flex items-center gap-3 px-4 py-3 bg-bg border border-border rounded-lg' },
+                        React.createElement('span', { className: 'text-lg' }, '🖥'),
+                        React.createElement('div', { className: 'flex-1' },
+                            React.createElement('p', { className: 'text-sm font-medium text-textPrimary' }, 'Current device'),
+                            React.createElement('p', { className: 'text-xs text-textMuted' }, 'Windows · Chrome')
+                        ),
+                        React.createElement('span', { className: 'px-2 py-0.5 rounded-full text-xs font-medium bg-success/20 text-success' }, 'Active now')
+                    )
+                )
+            )
+        );
+    }
+
+    // ─── Danger Zone Tab ────────────────────────────────────────────
+    function DangerTab() {
+        const { user, deleteAccount } = useAuth();
+        const navigate = useNavigate();
+        const [showModal, setShowModal] = useState(false);
+        const [confirmUsername, setConfirmUsername] = useState('');
+        const [loading, setLoading] = useState(false);
+        const [error, setError] = useState('');
+
+        const handleDelete = async () => {
+            setError('');
+            setLoading(true);
+            try {
+                await deleteAccount();
+                navigate('/login');
+            } catch (err) { setError(err.message || 'Failed to delete account'); }
+            setLoading(false);
+        };
+
+        const usernameMatches = confirmUsername === (user?.username || '');
+
+        return React.createElement(React.Fragment, null,
+            React.createElement('div', { className: 'space-y-6' },
+                React.createElement('div', { className: 'bg-surface rounded-xl p-5 md:p-6 border border-error/30', style: { boxShadow: '0 0 0 1px rgba(255,91,91,0.2), 0 8px 32px rgba(0,0,0,0.4)' } },
+                    React.createElement('h2', { className: 'text-lg font-bold text-error mb-2' }, 'Danger Zone'),
+                    React.createElement('h3', { className: 'text-sm font-semibold text-textPrimary mb-3' }, 'Delete Account'),
+                    React.createElement('p', { className: 'text-sm text-textSecondary mb-4' }, 'Permanently delete your account and all associated data. This action cannot be undone.'),
+                    React.createElement('ul', { className: 'text-sm text-textSecondary space-y-1.5 mb-6 list-disc list-inside' },
+                        React.createElement('li', null, 'All account data will be permanently removed'),
+                        React.createElement('li', null, 'All settings and preferences will be deleted'),
+                        React.createElement('li', null, 'API access will be revoked immediately')
+                    ),
+                    React.createElement('button', {
+                        className: 'px-5 py-2.5 border border-error text-error rounded-lg font-semibold hover:bg-error/10 transition-all cursor-pointer min-h-[44px]',
+                        onClick: () => setShowModal(true),
+                    }, 'Delete My Account')
+                )
+            ),
+
+            // Modal
+            showModal && React.createElement('div', {
+                className: 'fixed inset-0 z-50 flex items-center justify-center px-4',
+                role: 'dialog',
+                'aria-modal': 'true',
+                'aria-label': 'Confirm account deletion',
+            },
+                React.createElement('div', {
+                    className: 'absolute inset-0 bg-black/70 backdrop-blur-sm',
+                    onClick: () => { setShowModal(false); setConfirmUsername(''); setError(''); },
+                }),
+                React.createElement('div', { className: 'relative bg-surface rounded-2xl card-shadow p-6 max-w-md w-full fade-in space-y-5' },
+                    React.createElement('div', { className: 'flex flex-col items-center text-center space-y-3' },
+                        React.createElement('div', { className: 'w-14 h-14 rounded-full bg-error/20 flex items-center justify-center' },
+                            React.createElement('span', { className: 'text-2xl text-error' }, '⚠')
+                        ),
+                        React.createElement('h3', { className: 'text-xl font-bold text-textPrimary' }, 'Are you absolutely sure?'),
+                        React.createElement('p', { className: 'text-sm text-textSecondary' },
+                            'This will permanently delete your account. Type ',
+                            React.createElement('strong', { className: 'text-textPrimary' }, user?.username || 'your username'),
+                            ' to confirm.'
+                        )
+                    ),
+                    error && React.createElement(Alert, { type: 'error', message: error }),
+                    React.createElement(InputField, {
+                        label: 'Confirm username',
+                        value: confirmUsername,
+                        onChange: setConfirmUsername,
+                        placeholder: user?.username || 'username',
+                    }),
+                    React.createElement('div', { className: 'flex gap-3' },
+                        React.createElement('button', {
+                            className: 'flex-1 py-2.5 rounded-lg font-semibold text-textSecondary border border-border hover:bg-surfaceRaised transition-all cursor-pointer min-h-[44px]',
+                            onClick: () => { setShowModal(false); setConfirmUsername(''); setError(''); },
+                        }, 'Cancel'),
+                        React.createElement('button', {
+                            className: `flex-1 py-2.5 rounded-lg font-semibold text-white transition-all min-h-[44px] flex items-center justify-center gap-2 ${
+                                usernameMatches && !loading ? 'bg-error hover:bg-red-600 cursor-pointer' : 'bg-error/30 text-white/50 cursor-not-allowed'
+                            }`,
+                            disabled: !usernameMatches || loading,
+                            onClick: handleDelete,
+                        }, loading ? React.createElement(Spinner) : null, 'Permanently Delete')
+                    )
+                )
+            )
+        );
+    }
+
+    // ─── Root Redirect ──────────────────────────────────────────────
+    function RootRedirect() {
+        const { isAuthenticated, loading } = useAuth();
+        if (loading) return React.createElement(LoadingScreen);
+        return React.createElement(Navigate, { to: isAuthenticated ? '/account' : '/login', replace: true });
+    }
+
+    // ─── App ────────────────────────────────────────────────────────
+    function App() {
+        return React.createElement(ErrorBoundary, null,
+            React.createElement(HashRouter, null,
+                React.createElement(ToastProvider, null,
+                    React.createElement(AuthProvider, null,
+                        React.createElement(AppRoutes)
+                    )
+                )
+            )
+        );
+    }
+
+    function AppRoutes() {
+        const location = useLocation();
+        return React.createElement('div', { className: 'fade-in', key: location.pathname },
+            React.createElement(Routes, null,
+                React.createElement(Route, { path: '/', element: React.createElement(RootRedirect) }),
+                React.createElement(Route, { path: '/login', element: React.createElement(LoginPage) }),
+                React.createElement(Route, { path: '/signup', element: React.createElement(SignupPage) }),
+                React.createElement(Route, { path: '/verify-email', element: React.createElement(VerifyEmailPage) }),
+                React.createElement(Route, { path: '/forgot-password', element: React.createElement(ForgotPasswordPage) }),
+                React.createElement(Route, { path: '/reset-password', element: React.createElement(ResetPasswordPage) }),
+                React.createElement(Route, { path: '/account', element: React.createElement(ProtectedRoute, null, React.createElement(AccountDashboard)) }),
+                React.createElement(Route, { path: '*', element: React.createElement(Navigate, { to: '/', replace: true }) })
+            )
+        );
+    }
+
+    // ─── Mount ──────────────────────────────────────────────────────
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(React.createElement(App));
+    </script>
+</body>
+</html>

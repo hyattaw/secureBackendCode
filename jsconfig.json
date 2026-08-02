@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@drewhyatt/ui/*": ["packages/ui/src/*"],
+      "@drewhyatt/core/*": ["packages/core/src/*"],
+      "@drewhyatt/minigames/*": ["packages/minigames/src/*"],
+      "@drewhyatt/assets/*": ["packages/assets/*"]
+    }
+  }
+}

@@ -1,0 +1,27 @@
+/* Core */
+@import "./core/App.css";
+@import "./core/globals.css";
+@import "./core/layout.css";
+@import "./core/reset.css";
+@import "./core/tokens.css";
+@import "./core/transitions.css";
+@import "./core/typography.css";
+
+/* Components */
+@import "./components/buttons.css";
+@import "./components/cards.css";
+@import "./components/counter.css";
+@import "./components/forms.css";
+@import "./components/header.css";
+@import "./components/modal.css";
+@import "./components/navcard.css";
+@import "./components/settingsmenu.css";
+@import "./components/soundToggle.css";
+@import "./components/tables.css";
+@import "./components/themetoggle.css";
+
+/* Pages */
+@import "./pages/home.css";
+@import "./pages/index.css";
+@import "./pages/minigames.css";
+@import "./pages/landing.css";
